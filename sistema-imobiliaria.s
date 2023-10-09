@@ -1,6 +1,5 @@
 .section .data
-    abertura:	.asciz	"\nControle de cadastro de imoveis para locacao\n"
-	borda:	.asciz	"===================================================="
+    abertura:	.asciz	"\n====================================================\nControle de cadastro de imoveis para locacao\n====================================================\n"
 	menuOp:		.asciz	"\nMenu de Opcoes\n<1> Inserir imovel\n<2> Remover imovel\n<3> Consultar imovel\n<4> Relatorio geral\n<5> Finalizar\nDigite opcao => "
 	opcao:		.int	0
 
@@ -33,7 +32,7 @@
 
     pedeNumDeQuartosFiltro: .asciz "\nPor qual quantia de quartos deseja filtrar? => "
     numQuartosFiltro: .int 0
-    nenhumRegistroEncontradoFiltro: .asciz "\nNenhum registro com esse numero de quartos encontrado\n"
+    nenhumRegistroEncontradoFiltro: .asciz "\nNenhum registro encontrado\n"
 
     nome:       .byte 256
     celular:    .byte 16
@@ -284,8 +283,10 @@ _removerImovel:
     jmp     _mostraMenu
 
 _consultarImovel:
-    bp1:
-    # Tipo imov
+    movl    totalRegistros, %eax
+    cmpl    $0, %eax
+    je      _nenhumRegistroEncontrado
+
     pushl	$pedeNumDeQuartosFiltro
 	call	printf
 
@@ -300,12 +301,21 @@ _consultarImovel:
     pushl   numQuartosFiltro   # passa num quartos como param
     call    buscarRegistroMaiorQueBuscado
 
-    bp2:
     movl    posRegistroMaiorQueBuscado, %edx
     movl    posRegistroBuscado, %eax
 
-    cmpl    %edx, %eax      # se igual ha apenas 1 registro
-    jne     _contCalculoReg
+    cmpl    %edx, %eax          # se igual ha apenas 1 registro ou nenhum
+    jne     _contCalculoReg     # continua calc. se diferente
+
+    movl    endRegistroBuscado, %esi
+    cmpl    $0, %esi
+    je      _nenhumRegistroEncontrado   # se endRegistroBuscado eh 0 toda lista percorrida sem encontrar
+
+    movl    544(%esi), %esi     # esi contem o numero de quartos
+
+    cmpl    numQuartosFiltro, %esi
+    jne     _nenhumRegistroEncontrado   # se o reg. nao possui o num. quartos buscado
+                                        # mostra msg de erro
     inc     %edx            # incrementa para subl resultar em 1
 
     _contCalculoReg:
@@ -317,6 +327,12 @@ _consultarImovel:
     pushl   %edx    # num. registros para mostrar
     pushl   %eax    # pos. inicial da lista
     call    imprimirRegistros
+
+    jmp     _mostraMenu
+
+    _nenhumRegistroEncontrado:
+    pushl	$nenhumRegistroEncontradoFiltro
+	call	printf
 
     jmp     _mostraMenu
 

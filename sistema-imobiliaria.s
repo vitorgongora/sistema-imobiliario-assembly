@@ -15,6 +15,7 @@
 
     mostraSucessoOp:	.asciz	"\nOperacao realizada com sucesso!\n"
 
+    mostraPosRegistro: .asciz "\nPos. do registro = %d"
     mostraNomeProp:	.asciz	"\nNome do proprietario = %s"
     mostraCelProp:	.asciz	"\nCelular do proprietario = %s"
     mostraTipoImov:	.asciz	"\nTipo do imovel = %s"
@@ -29,6 +30,10 @@
 	tipoStr:	        .asciz	"%s"
     tipoStrComEspaco:   .asciz " %[^\n]"
 	newLine: 	.asciz 	"\n"
+
+    pedeNumDeQuartosFiltro: .asciz "\nPor qual quantia de quartos deseja filtrar? => "
+    numQuartosFiltro: .int 0
+    nenhumRegistroEncontradoFiltro: .asciz "\nNenhum registro com esse numero de quartos encontrado\n"
 
     nome:       .byte 256
     celular:    .byte 16
@@ -62,9 +67,10 @@
     cabecaLista: .int 0
     totalRegistros: .int 0
 
+    posRegistroBuscado: .int 0
+    posRegistroMaiorQueBuscado: .int 0
     endRegistroBuscado: .int 0
     endRegistroAnteriorAoBuscado: .int 0
-    endRegistroPosteriorAoBuscado: .int 0
 
 .section .text
 .globl _start
@@ -278,11 +284,45 @@ _removerImovel:
     jmp     _mostraMenu
 
 _consultarImovel:
+    bp1:
+    # Tipo imov
+    pushl	$pedeNumDeQuartosFiltro
+	call	printf
+
+	pushl	$numQuartosFiltro    # contem o num de quartos
+	pushl	$tipoNum
+	call	scanf
+    addl	$12, %esp
+
+    pushl   numQuartosFiltro   # passa num quartos como param
+    call    buscarRegistro
+
+    pushl   numQuartosFiltro   # passa num quartos como param
+    call    buscarRegistroMaiorQueBuscado
+
+    bp2:
+    movl    posRegistroMaiorQueBuscado, %edx
+    movl    posRegistroBuscado, %eax
+
+    cmpl    %edx, %eax      # se igual ha apenas 1 registro
+    jne     _contCalculoReg
+    inc     %edx            # incrementa para subl resultar em 1
+
+    _contCalculoReg:
+    subl    %eax, %edx  # edx - eax = num. reg. para mostrar
+
+    movl   endRegistroBuscado, %edi
+
+    pushl   %edi    # end. primeiro registro
+    pushl   %edx    # num. registros para mostrar
+    pushl   %eax    # pos. inicial da lista
+    call    imprimirRegistros
+
     jmp     _mostraMenu
 
 buscarRegistro:
     # Busca pelo primeiro registro com o numero X de quartos
-    # e salva o endereco dele, seu anterior e posterior em memoria
+    # e salva o endereco dele e seu anterior em memoria
 
     # Espera-se que X (int) esteja armazenado no topo da pilha antes
     # da chamada a essa funcao
@@ -293,14 +333,17 @@ buscarRegistro:
 
     movl    totalRegistros, %ecx
     movl    cabecaLista, %edx
+    movl    $-1, %edi    # posicao do registro buscado
 
     movl    $0, endRegistroAnteriorAoBuscado
     movl    %edx, endRegistroBuscado
 
     _loopBuscarRegistro:
+    inc     %edi                # incrementa posicao do registro buscado
+    movl    %edi, posRegistroBuscado
     movl    544(%edx), %eax     # eax contem o numero de quartos do reg atual
     cmpl    %ebx, %eax          
-    jge     _fimBuscarRegistro  # eax > ebx
+    jge     _fimBuscarRegistro  # eax >= ebx
 
     movl    %edx, endRegistroAnteriorAoBuscado
     movl    557(%edx), %eax
@@ -312,9 +355,45 @@ buscarRegistro:
     _fimBuscarRegistro:
     ret
 
+buscarRegistroMaiorQueBuscado:
+    # Busca pelo primeiro registro com o numero maior que X de quartos
+    # e salva o endereco dele e seu anterior em memoria
+
+    # Espera-se que X (int) esteja armazenado no topo da pilha antes
+    # da chamada a essa funcao
+
+    popl    %ecx        # salva end de ret em ecx
+    popl    %ebx        # ebx contem o numero X de quartos
+    pushl   %ecx        # adiciona end de ret na pilha novamente
+
+    movl    totalRegistros, %ecx
+    movl    cabecaLista, %edx
+    movl    $-1, %edi    # posicao do registro buscado
+    movl    $0, posRegistroMaiorQueBuscado
+
+    # movl    %edx, endRegistroBuscado
+
+    _loopBuscarRegistroMaiorQueBuscado:
+    inc     %edi                # incrementa posicao do registro buscado
+    movl    %edi, posRegistroMaiorQueBuscado
+    movl    544(%edx), %eax     # eax contem o numero de quartos do reg atual
+    cmpl    %ebx, %eax          
+    jg     _fimBuscarRegistroMaiorQueBuscado  # eax > ebx
+
+    # movl    %edx, endRegistroAnteriorAoBuscado
+    movl    557(%edx), %eax
+    # movl    %eax, endRegistroBuscado
+    movl    %eax, %edx
+
+    loop _loopBuscarRegistroMaiorQueBuscado
+
+    _fimBuscarRegistroMaiorQueBuscado:
+    ret
+
 _obterRelatorioGeral:
     pushl   cabecaLista
     pushl   totalRegistros
+    pushl   $0
     call    imprimirRegistros
 
     jmp     _mostraMenu
@@ -322,15 +401,25 @@ _obterRelatorioGeral:
 imprimirRegistros:
     # Imprime os registros de acordo com variaveis
     # passadas para a funcao via pilha
-    
-    # ecx = numero de registros
+
+    # edi = numero de registros
     # esi = end do primeiro registro
 
     addl    $4, %esp    # move o stack para nao pegar o end de retorno
-    popl    %edi        # ecx contem o numero de registros
+    popl    %ebp        # ebp contem a pos. do primeiro registro
+    popl    %edi        # edi contem o numero de registros
     popl    %esi        # esi contem o end do primeiro registro
+
+    # movl   posRegistroBuscado, %ebp
     
     _loopImprimirRegistros:
+    # Posicao do registro
+    pushl   %ebp
+    pushl   $mostraPosRegistro
+	call	printf
+    addl 	$8, %esp
+    inc     %ebp    # incrementa a posicao do registro para o prox.
+
     # Nome prop
     pushl   %esi
     pushl   $mostraNomeProp

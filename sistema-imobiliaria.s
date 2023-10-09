@@ -34,21 +34,11 @@
     numQuartosFiltro: .int 0
     nenhumRegistroEncontradoFiltro: .asciz "\nNenhum registro encontrado\n"
 
-    nome:       .byte 256
-    celular:    .byte 16
-    tipo:       .byte 16
-    endereco:   .byte 256
-    numQuartos: .int 0
-    garagem:    .byte 0
-    metragem:   .int 0
-    aluguel:    .int 0
-    cleanScanf: .byte 16
-
     endNovoRegistro: .int 0
     tamanhoTotalRegistroBytes: .int 561
 
     # ################################# #
-    # Registro          => 557 bytes
+    # Registro          => 561 bytes
     # ################################# #
     #
     # Nome[0]           => 256 bytes
@@ -76,11 +66,11 @@
 _start:
     call    carregarArquivoRegistro
 
-	pushl	$abertura
+_mostraMenu:
+    pushl	$abertura
 	call	printf
 	addl	$4, %esp
 
-_mostraMenu:	
 	call	menuOpcoes
 
 	cmpl	$5, opcao
@@ -88,7 +78,7 @@ _mostraMenu:
 
 	call	trataOpcoes
 	
-	jmp	    _start
+	jmp	    _mostraMenu
 
 _fim:
 	pushl   $0

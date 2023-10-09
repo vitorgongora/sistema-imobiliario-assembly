@@ -64,6 +64,7 @@
     posRegistroMaiorQueBuscado: .int 0
     endRegistroBuscado: .int 0
     endRegistroAnteriorAoBuscado: .int 0
+    endRegistroRemovido: .int 0
 
 .section .text
 .globl _start
@@ -286,18 +287,60 @@ _removerImovel:
 	call	scanf
     addl	$12, %esp
 
-    movl    posRegRemover, %eax
-    movl    tamanhoTotalRegistroBytes, %ebx
-    dec     %ebx
+    movl    posRegRemover, %ecx
+    movl    totalRegistros, %ebx
+    dec     %ebx    # decrementa pois indice comeca no 0
 
-    cmpl    $0, %eax
+    # se pos informada < 0 ou pos informada > (total de registros - 1)
+    # aborta operacao
+    cmpl    $0, %ecx    # ecx < 0
     jl      _posicaoInvalida
-    cmpl    %ebx, %ebx
+    cmpl    %ebx, %ecx  # ecx > (total registros - 1)
     jg      _posicaoInvalida
+
+    movl    cabecaLista, %eax
+
+    # verifica se eh o primeiro elemento
+    cmpl    $0, %ecx
+    jne     _loopRemoverImovel
+
+    # remove da cabeca da lista
+    movl    %eax, endRegistroRemovido
+    movl    557(%eax), %esi     # proximo registro vira cabeca
+    movl    %esi, cabecaLista
+    jmp     _freeReg
+
+    _loopRemoverImovel:
+    movl    %eax, endRegistroAnteriorAoBuscado
+    movl    557(%eax), %esi
+    movl    %esi, %eax
+    movl    %esi, endRegistroRemovido
+    dec     %ecx
+    cmpl    $0, %ecx
+    jne     _loopRemoverImovel
+
+    movl    endRegistroAnteriorAoBuscado, %eax
+    movl    endRegistroRemovido, %ebx
+    movl    557(%ebx), %esi     # esi aponta pro reg. que o removido aponta
+    movl    %esi, 557(%eax)     # reg. anterior ao removido aponta para onde esi aponta
+
+    _freeReg:
+    movl    totalRegistros, %eax
+    dec     %eax
+    movl    %eax, totalRegistros
+
+    pushl	endRegistroRemovido
+	call 	free
+
+    pushl	$mostraSucessoOp
+	call	printf
+    addl	$8, %esp
 
     jmp     _mostraMenu
 
     _posicaoInvalida:
+    pushl	$mostraPosInvalida
+	call	printf
 
     jmp     _mostraMenu
 
@@ -429,7 +472,7 @@ _obterRelatorioGeral:
     movl    totalRegistros, %eax
     cmpl    $0, %eax
     je      _nenhumRegistroEncontrado
-    
+
     pushl   cabecaLista
     pushl   totalRegistros
     pushl   $0

@@ -19,20 +19,21 @@
     mostraCelProp:	.asciz	"\nCelular do proprietario = %s"
     mostraTipoImov:	.asciz	"\nTipo do imovel = %s"
     mostraEndImov:	.asciz	"\nEndereco do imovel = %s"
-    mostraNumQuartosImov:	.asciz	"\Numero de quartos do imovel = %d"
-    mostraExisteGaragemImov:	.asciz	"\nExiste garagem no imovel = %s"
+    mostraNumQuartosImov:	.asciz	"\nNumero de quartos do imovel = %d"
+    mostraExisteGaragemImov:	.asciz	"\nExiste garagem no imovel = %.1s"
     mostraMetragemImov:	.asciz	"\nMetragem do imovel = %d"
-    mostraValorAluguelImov:	.asciz	"\nValor do alugel do imovel (R$) = %d"
+    mostraValorAluguelImov:	.asciz	"\nValor do aluguel do imovel (R$) = %d\n"
 
-    tipoNum:    .asciz 	" %d"
-	tipoChar:	.asciz	" %c"
-	tipoStr:	.asciz	"%s"
+    tipoNum:            .asciz 	" %d"
+	tipoChar:	        .asciz	" %c"
+	tipoStr:	        .asciz	"%s"
+    tipoStrComEspaco:   .asciz " %[^\n]"
 	newLine: 	.asciz 	"\n"
 
-    nome:       .asciz ""
-    celular:    .asciz ""
-    tipo:       .asciz ""
-    endereco:   .asciz ""
+    nome:       .byte 256
+    celular:    .byte 16
+    tipo:       .byte 16
+    endereco:   .byte 256
     numQuartos: .int 0
     garagem:    .byte 0
     metragem:   .int 0
@@ -125,7 +126,6 @@ _inserirImovel:
     # Le a entrada do usuario e armazena em memoria
     call    lerEntradaImovelUsuario
 
-    bp1:
     # Insere na lista
     cmpl    $0, totalRegistros
     je      inserirRegistroEmListaLimpa
@@ -152,7 +152,7 @@ inserirRegistroNaLista:
     _contInserirRegistroNaLista:
     movl    endRegistroBuscado, %ebx
     cmpl    $0, %ebx
-    jne     _atualizaRegAnterior
+    jne     _atualizaRegPosterior
     je      _fimInserirRegistroNaLista
 
     _atualizaRegAnterior:
@@ -182,84 +182,84 @@ lerEntradaImovelUsuario:
 	pushl	tamanhoTotalRegistroBytes
 	call	malloc
     movl    %eax, endNovoRegistro
-    movl    endNovoRegistro, %ecx
+    movl    endNovoRegistro, %esi
 	addl	$4,	%esp
 
     # Nome prop
     pushl	$pedeNomeProp
 	call	printf
 
-	pushl	%ecx
-	pushl	$tipoStr
+	pushl	%esi
+	pushl	$tipoStrComEspaco
 	call	scanf
 	addl	$12, %esp
-    addl    $256, %ecx      # move para o prox. campo
+    addl    $256, %esi      # move para o prox. campo
 
     # Cel prop
     pushl	$pedeCelProp
 	call	printf
 
-	pushl	%ecx
+	pushl	%esi
 	pushl	$tipoStr
 	call	scanf
 	addl	$12, %esp
-    addl    $16, %ecx      # move para o prox. campo
+    addl    $16, %esi      # move para o prox. campo
 
     # Tipo imov
     pushl	$pedeTipoImov
 	call	printf
 
-	pushl	%ecx
+	pushl	%esi
 	pushl	$tipoStr
 	call	scanf
 	addl	$12, %esp
-    addl    $16, %ecx      # move para o prox. campo
+    addl    $16, %esi      # move para o prox. campo
 
     # Endereco imov
     pushl	$pedeEndImov
 	call	printf
 
-	pushl	%ecx
-	pushl	$tipoStr
+	pushl	%esi
+	pushl	$tipoStrComEspaco
 	call	scanf
 	addl	$12, %esp
-    addl    $256, %ecx      # move para o prox. campo
+    addl    $256, %esi      # move para o prox. campo
 
     # Numero quartos imov
     pushl	$pedeNumQuartosImov
 	call	printf
 
-	pushl	%ecx
+	pushl	%esi
 	pushl	$tipoNum
 	call	scanf
 	addl	$12, %esp
-    addl    $4, %ecx      # move para o prox. campo
+    addl    $4, %esi      # move para o prox. campo
 
     # Existe garagem imov
     pushl	$pedeExisteGaragemImov
 	call	printf
 
-	pushl	%ecx
-	pushl	$tipoChar
+	pushl	%esi
+	pushl	$tipoStr
 	call	scanf
 	addl	$12, %esp
-    addl    $1, %ecx      # move para o prox. campo
+    addl    $1, %esi      # move para o prox. campo
 
     # Metragem imov
     pushl	$pedeMetragemImov
 	call	printf
 
-	pushl	%ecx
+	pushl	%esi
 	pushl	$tipoNum
 	call	scanf
 	addl	$12, %esp
-    addl    $4, %ecx      # move para o prox. campo
+    addl    $4, %esi      # move para o prox. campo
 
     # Valor aluguel imov
     pushl	$pedeValorAluguelImov
 	call	printf
 
-	pushl	%ecx
+	pushl	%esi
 	pushl	$tipoNum
 	call	scanf
 	addl	$12, %esp
@@ -308,19 +308,71 @@ buscarRegistro:
     ret
 
 _obterRelatorioGeral:
+    call imprimirRegistro
+
     jmp     _mostraMenu
 
 imprimirRegistro:
     # Imprime o registro lido em memoria
+    movl    cabecaLista, %esi
+    
+    # Nome prop
+    pushl   %esi
+    pushl   $mostraNomeProp
+	call	printf
+    addl 	$8, %esp
+    addl    $256, %esi
 
-    ret
+    # Cel prop
+    pushl   %esi
+    pushl   $mostraCelProp
+	call	printf
+    addl 	$8, %esp
+    addl    $16, %esi
 
-limparScanf:
-    # Remove trailing characters como \n
+    # Tipo imov
+    pushl   %esi
+    pushl   $mostraTipoImov
+	call	printf
+    addl 	$8, %esp
+    addl    $16, %esi
 
-    pushl   $cleanScanf
-    pushl   $tipoChar
-    call    scanf
-    addl    $8, %esp
+    # Endereco imov
+    pushl   %esi
+    pushl   $mostraEndImov
+	call	printf
+    addl 	$8, %esp
+    addl    $256, %esi
+
+    # Num quartos imov
+    movl    (%esi), %ebx
+    pushl   %ebx
+    pushl   $mostraNumQuartosImov
+	call	printf
+    addl 	$8, %esp
+    addl    $4, %esi
+
+    # Existe garagem imov
+    pushl   %esi
+    pushl   $mostraExisteGaragemImov
+	call	printf
+    addl 	$8, %esp
+    addl    $1, %esi
+
+    # Metragem imov
+    movl    (%esi), %ebx
+    pushl   %ebx
+    pushl   $mostraMetragemImov
+	call	printf
+    addl 	$8, %esp
+    addl    $4, %esi
+
+    # Valor alugel imov
+    movl    (%esi), %ebx
+    pushl   %ebx
+    pushl   $mostraValorAluguelImov
+	call	printf
+    addl 	$8, %esp
+    addl    $4, %esi
 
     ret

@@ -139,15 +139,18 @@ _inserirImovel:
 
 inserirRegistroNaLista:
     movl    endNovoRegistro, %ecx
-    movl    544(%ecx), %eax
-    movl    %eax, numQuartos
+    movl    544(%ecx), %eax     # num quartos em %eax
 
-    pushl	$numQuartos
+    pushl	%eax    # passa o num de quartos como param
     call    buscarRegistro
 
+    movl    endNovoRegistro, %ecx
     movl    endRegistroAnteriorAoBuscado, %eax
     cmpl    $0, %eax
     jne     _atualizaRegAnterior
+
+    _atualizaCabecaLista:
+    movl    %ecx, cabecaLista
 
     _contInserirRegistroNaLista:
     movl    endRegistroBuscado, %ebx
@@ -263,6 +266,11 @@ lerEntradaImovelUsuario:
 	pushl	$tipoNum
 	call	scanf
 	addl	$12, %esp
+    addl    $4, %esi      # move para o prox. campo
+
+    # Ponteiro proximo reg
+    # default: 0
+    movl    $0, (%esi)
 
     ret
 
@@ -279,28 +287,25 @@ buscarRegistro:
     # Espera-se que X (int) esteja armazenado no topo da pilha antes
     # da chamada a essa funcao
 
-    subl    $4, %esp    # desce no stack para nao pegar o end de retorno
+    popl    %ecx        # salva end de ret em ecx
     popl    %ebx        # ebx contem o numero X de quartos
+    pushl   %ecx        # adiciona end de ret na pilha novamente
 
     movl    totalRegistros, %ecx
     movl    cabecaLista, %edx
 
     movl    $0, endRegistroAnteriorAoBuscado
     movl    %edx, endRegistroBuscado
-    movl    $0, endRegistroPosteriorAoBuscado
 
     _loopBuscarRegistro:
     movl    544(%edx), %eax     # eax contem o numero de quartos do reg atual
     cmpl    %ebx, %eax          
-    jge     _fimBuscarRegistro
+    jge     _fimBuscarRegistro  # eax > ebx
 
     movl    %edx, endRegistroAnteriorAoBuscado
     movl    557(%edx), %eax
     movl    %eax, endRegistroBuscado
-    
-    movl    557(%edx), %esi
-    movl    557(%esi), %eax
-    movl    %eax, endRegistroPosteriorAoBuscado
+    movl    %eax, %edx
 
     loop _loopBuscarRegistro
 
@@ -308,14 +313,24 @@ buscarRegistro:
     ret
 
 _obterRelatorioGeral:
-    call imprimirRegistro
+    pushl   cabecaLista
+    pushl   totalRegistros
+    call    imprimirRegistros
 
     jmp     _mostraMenu
 
-imprimirRegistro:
-    # Imprime o registro lido em memoria
-    movl    cabecaLista, %esi
+imprimirRegistros:
+    # Imprime os registros de acordo com variaveis
+    # passadas para a funcao via pilha
     
+    # ecx = numero de registros
+    # esi = end do primeiro registro
+
+    addl    $4, %esp    # move o stack para nao pegar o end de retorno
+    popl    %edi        # ecx contem o numero de registros
+    popl    %esi        # esi contem o end do primeiro registro
+    
+    _loopImprimirRegistros:
     # Nome prop
     pushl   %esi
     pushl   $mostraNomeProp
@@ -374,5 +389,14 @@ imprimirRegistro:
 	call	printf
     addl 	$8, %esp
     addl    $4, %esi
+
+    # Move para o proximo registro
+    movl    (%esi), %eax
+    movl    %eax, %esi
+
+    # Loop manual, label out of range para instr. loop
+    dec     %edi
+    cmpl    $0, %edi
+    jne     _loopImprimirRegistros
 
     ret

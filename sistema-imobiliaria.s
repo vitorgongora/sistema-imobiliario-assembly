@@ -12,8 +12,6 @@
     pedeMetragemImov:	.asciz	"\nQual a metragem do imovel? (insira apenas o numero) => "
     pedeValorAluguelImov:	.asciz	"\nQual o valor do aluguel do imovel (R$)? (insira apenas o numero) => "
 
-    mostraSucessoOp:	.asciz	"\nOperacao realizada com sucesso!\n"
-
     mostraPosRegistro: .asciz "\nPos. do registro = %d"
     mostraNomeProp:	.asciz	"\nNome do proprietario = %s"
     mostraCelProp:	.asciz	"\nCelular do proprietario = %s"
@@ -33,6 +31,12 @@
     pedeNumDeQuartosFiltro: .asciz "\nPor qual quantia de quartos deseja filtrar? => "
     numQuartosFiltro: .int 0
     nenhumRegistroEncontradoFiltro: .asciz "\nNenhum registro encontrado\n"
+
+    pedePosRemover: .asciz "\nQual a posicao do registro que deseja remover? => "
+    posRegRemover:  .int 0
+    mostraPosInvalida:	.asciz	"\nPosicao informada invalida\n"
+
+    mostraSucessoOp:	.asciz	"\nOperacao realizada com sucesso!\n"
 
     endNovoRegistro: .int 0
     tamanhoTotalRegistroBytes: .int 561
@@ -270,6 +274,31 @@ lerEntradaImovelUsuario:
     ret
 
 _removerImovel:
+    movl    totalRegistros, %eax
+    cmpl    $0, %eax
+    je      _nenhumRegistroEncontrado
+
+    pushl	$pedePosRemover
+	call	printf
+
+    pushl	$posRegRemover
+	pushl	$tipoNum
+	call	scanf
+    addl	$12, %esp
+
+    movl    posRegRemover, %eax
+    movl    tamanhoTotalRegistroBytes, %ebx
+    dec     %ebx
+
+    cmpl    $0, %eax
+    jl      _posicaoInvalida
+    cmpl    %ebx, %ebx
+    jg      _posicaoInvalida
+
+    jmp     _mostraMenu
+
+    _posicaoInvalida:
+
     jmp     _mostraMenu
 
 _consultarImovel:
@@ -397,6 +426,10 @@ buscarRegistroMaiorQueBuscado:
     ret
 
 _obterRelatorioGeral:
+    movl    totalRegistros, %eax
+    cmpl    $0, %eax
+    je      _nenhumRegistroEncontrado
+    
     pushl   cabecaLista
     pushl   totalRegistros
     pushl   $0

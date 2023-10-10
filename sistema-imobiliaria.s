@@ -1,13 +1,13 @@
 .section .data
     abertura:	.asciz	"\n====================================================\nControle de cadastro de imoveis para locacao\n====================================================\n"
-	menuOp:		.asciz	"\nMenu de Opcoes\n<1> Inserir imovel\n<2> Remover imovel\n<3> Consultar imovel\n<4> Relatorio geral\n<5> Finalizar\nDigite opcao => "
+	menuOp:		.asciz	"\nMenu de Opcoes\n<1> Inserir imovel\n<2> Remover imovel\n<3> Consultar imovel\n<4> Relatorio geral\n<5> Salvar registros\n<6> Finalizar\nDigite opcao => "
 	opcao:		.int	0
 
-	pedeNomeProp:	.asciz	"\nQual o nome do proprietario? => "
-	pedeCelProp:	.asciz	"\nQual o celular do proprietario? => "
+	pedeNomeProp:	.asciz	"\nQual o nome do proprietario? (255 chars) => "
+	pedeCelProp:	.asciz	"\nQual o celular do proprietario? (16 chars) => "
     pedeTipoImov:	.asciz	"\nQual o tipo do imovel (casa/apartamento)? => "
-    pedeEndImov:	.asciz	"\nQual o endereco do imovel? => "
-    pedeNumQuartosImov:	.asciz	"\nQual o numero de quartos do imovel? => "
+    pedeEndImov:	.asciz	"\nQual o endereco do imovel? (255 chars) => "
+    pedeNumQuartosImov:	.asciz	"\nQual o numero de quartos do imovel? (insira apenas o numero) => "
     pedeExisteGaragemImov:	.asciz	"\nO imovel possui garagem (S/N)? => "
     pedeMetragemImov:	.asciz	"\nQual a metragem do imovel? (insira apenas o numero) => "
     pedeValorAluguelImov:	.asciz	"\nQual o valor do aluguel do imovel (R$)? (insira apenas o numero) => "
@@ -66,6 +66,11 @@
     endRegistroAnteriorAoBuscado: .int 0
     endRegistroRemovido: .int 0
 
+    filename: .asciz "db.txt"
+
+.section .bss
+.lcomm filehandle, 4
+
 .section .text
 .globl _start
 _start:
@@ -78,7 +83,7 @@ _mostraMenu:
 
 	call	menuOpcoes
 
-	cmpl	$5, opcao
+	cmpl	$6, opcao
 	je	    _fim
 
 	call	trataOpcoes
@@ -114,13 +119,111 @@ trataOpcoes:
 	cmpl	$4, opcao
 	je		_obterRelatorioGeral
 
-	ret
+    cmpl	$5, opcao
+	je		atualizarArquivoRegistro
 
+	ret
+   
 carregarArquivoRegistro:
+    movl    $5, %eax
+    movl    $filename, %ebx
+    movl    $00, %ecx
+    movl    $0444, %edx
+    int     $0x80
+    test    %eax, %eax
+    js      _badfile
+    movl    %eax, filehandle
+
+    _loopCarregarArquivoRegistro:
+    # Aloca memoria
+    pushl	tamanhoTotalRegistroBytes
+	call	malloc
+    movl    %eax, endNovoRegistro
+    movl    endNovoRegistro, %esi
+	addl	$4,	%esp
+
+    movl    $3, %eax
+    movl    filehandle, %ebx
+    movl    %esi, %ecx
+    movl    $557, %edx
+    int     $0x80
+
+    # Testa se chegou ao fim do arquivo
+    test    %eax, %eax
+    jz      _fimCarregarArquivoRegistro
+    js      _fimCarregarArquivoRegistro
+    
+    # Ponteiro proximo reg
+    # default: 0
+    movl    $0, 557(%esi)
+
+    # Insere na lista
+    cmpl    $0, totalRegistros
+    je      _carregarInserirRegistroEmListaLimpa
+    jne     _carregarInserirRegistroNaLista
+
+    _contCarregarArquivo:
+    jmp     _loopCarregarArquivoRegistro
+  
+    _fimCarregarArquivoRegistro:
+    # Fecha o arquivo
+    movl    filehandle, %ebx
+    movl    $6, %eax
+    int     $0x80
+
     ret
+
+    _carregarInserirRegistroEmListaLimpa:
+    call    inserirRegistroEmListaLimpa
+    jmp     _contCarregarArquivo
+
+    _carregarInserirRegistroNaLista:
+    call    inserirRegistroNaLista
+    jmp     _contCarregarArquivo
+
 
 atualizarArquivoRegistro:
-    ret
+    movl    $5, %eax
+    movl    $filename, %ebx
+    movl    $01101, %ecx    # cria o arquivo se nao existe
+                            # apaga o conteudo se existe e abre somente escrita
+    movl    $0644, %edx     # usuario le e escreve, demais permissao de leitura
+    int     $0x80
+    test    %eax, %eax
+    js      _badfile
+
+    movl    %eax, filehandle
+
+    movl    cabecaLista, %ecx
+
+    _loopAtualizarArquivoRegistro:
+    movl    $4, %eax
+    movl    filehandle, %ebx
+    movl    $557, %edx
+    int     $0x80
+    test    %eax, %eax
+    js      _badfile
+    movl    557(%ecx), %ebp
+    movl    %ebp, %ecx
+
+    cmpl    $0, %ecx
+    je      _fimAtualizarArquivoRegistro
+    jmp     _loopAtualizarArquivoRegistro
+
+    _fimAtualizarArquivoRegistro:
+    # Fecha o arquivo
+    movl    filehandle, %ebx
+    movl    $6, %eax
+    int     $0x80
+    
+    pushl	$mostraSucessoOp
+	call	printf
+    jmp     _mostraMenu
+
+    _badfile:
+    movl    %eax, %ebx
+    movl    $1, %eax
+    int     $0x80
 
 _inserirImovel:
     # Le a entrada do usuario e armazena em memoria
@@ -128,14 +231,22 @@ _inserirImovel:
 
     # Insere na lista
     cmpl    $0, totalRegistros
-    je      inserirRegistroEmListaLimpa
-    jne     inserirRegistroNaLista
+    je      _novoImovelInserirRegistroEmListaLimpa
+    jne     _novoImovelInserirRegistroNaLista
 
     _contInserirImovel:
     # Atualiza arquivo dos registros
-    call    atualizarArquivoRegistro
+    # call    atualizarArquivoRegistro
 
     jmp     _mostraMenu
+
+    _novoImovelInserirRegistroEmListaLimpa:
+    call    inserirRegistroEmListaLimpa
+    jmp     _contInserirImovel
+
+    _novoImovelInserirRegistroNaLista:
+    call    inserirRegistroNaLista
+    jmp     _contInserirImovel
 
 inserirRegistroNaLista:
     movl    endNovoRegistro, %ecx
@@ -143,6 +254,7 @@ inserirRegistroNaLista:
 
     pushl	%eax    # passa o num de quartos como param
     call    buscarRegistro
+    addl    $4, %esp
 
     movl    endNovoRegistro, %ecx
     movl    endRegistroAnteriorAoBuscado, %eax
@@ -170,14 +282,14 @@ inserirRegistroNaLista:
     addl    $1, %eax
     movl    %eax, totalRegistros
     
-    jmp     _contInserirImovel
+    ret
 
 inserirRegistroEmListaLimpa:
     movl    endNovoRegistro, %eax
     movl    %eax, cabecaLista
     movl    $1, totalRegistros
 
-    jmp     _contInserirImovel
+    ret
 
 lerEntradaImovelUsuario:
     # Armazena os dados informados pelo usuario

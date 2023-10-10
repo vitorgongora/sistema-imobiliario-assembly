@@ -1,6 +1,6 @@
 .section .data
     abertura:	.asciz	"\n====================================================\nControle de cadastro de imoveis para locacao\n====================================================\n"
-	menuOp:		.asciz	"\nMenu de Opcoes\n<1> Inserir imovel\n<2> Remover imovel\n<3> Consultar imovel\n<4> Relatorio geral\n<5> Salvar registros\n<6> Finalizar\nDigite opcao => "
+	menuOp:		.asciz	"\nMenu de Opcoes\n<1> Inserir imovel\n<2> Remover imovel\n<3> Consultar imovel\n<4> Relatorio geral\n<5> Recuperar registro\n<6> Salvar registros\n<7> Finalizar\nDigite opcao => "
 	opcao:		.int	0
 
 	pedeNomeProp:	.asciz	"\nQual o nome do proprietario? (255 chars) => "
@@ -34,6 +34,10 @@
 
     pedePosRemover: .asciz "\nQual a posicao do registro que deseja remover? => "
     posRegRemover:  .int 0
+
+    pedePosRecuperar: .asciz "\nQual a posicao do registro que deseja visualizar? => "
+    posRegRecuperar: .int 0
+
     mostraPosInvalida:	.asciz	"\nPosicao informada invalida\n"
 
     mostraSucessoOp:	.asciz	"\nOperacao realizada com sucesso!\n"
@@ -83,7 +87,7 @@ _mostraMenu:
 
 	call	menuOpcoes
 
-	cmpl	$6, opcao
+	cmpl	$7, opcao
 	je	    _fim
 
 	call	trataOpcoes
@@ -120,6 +124,9 @@ trataOpcoes:
 	je		_obterRelatorioGeral
 
     cmpl	$5, opcao
+	je		_recuperarImovel
+
+    cmpl	$6, opcao
 	je		atualizarArquivoRegistro
 
 	ret
@@ -596,6 +603,7 @@ imprimirRegistros:
     # Imprime os registros de acordo com variaveis
     # passadas para a funcao via pilha
 
+    # ebp = pos. numerica do primeiro registro
     # edi = numero de registros
     # esi = end do primeiro registro
 
@@ -603,8 +611,6 @@ imprimirRegistros:
     popl    %ebp        # ebp contem a pos. do primeiro registro
     popl    %edi        # edi contem o numero de registros
     popl    %esi        # esi contem o end do primeiro registro
-
-    # movl   posRegistroBuscado, %ebp
     
     _loopImprimirRegistros:
     # Posicao do registro
@@ -683,3 +689,43 @@ imprimirRegistros:
     jne     _loopImprimirRegistros
 
     ret
+
+_recuperarImovel:
+    movl    totalRegistros, %ebx
+    cmpl    $0, %ebx
+    je      _nenhumRegistroEncontrado
+
+    pushl	$pedePosRecuperar
+	call	printf
+
+    pushl	$posRegRecuperar
+	pushl	$tipoNum
+	call	scanf
+    addl	$12, %esp
+
+    movl    posRegRecuperar, %ecx
+    movl    cabecaLista, %eax
+
+    # se pos informada < 0 ou pos informada > (total de registros - 1)
+    # aborta operacao
+    dec     %ebx
+    cmpl    $0, %ecx    # ecx < 0
+    jl      _posicaoInvalida
+    cmpl    %ebx, %ecx  # ecx > (total registros - 1)
+    jg      _posicaoInvalida
+
+    _loopRecuperarImovel:
+    cmpl    $0, %ecx
+    je      _imprimirImovelRecuperado
+    movl    557(%eax), %ebx  # move para o prox. registro
+    movl    %ebx, %eax
+    dec     %ecx
+    jmp     _loopRecuperarImovel
+
+    _imprimirImovelRecuperado:
+    pushl   %eax    # end. primeiro registro
+    pushl   $1    # num. registros para mostrar
+    pushl   posRegRecuperar    # pos. inicial da lista
+    call    imprimirRegistros
+
+    jmp _mostraMenu

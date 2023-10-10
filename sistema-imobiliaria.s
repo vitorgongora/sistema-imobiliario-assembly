@@ -523,9 +523,8 @@ buscarRegistro:
     # Espera-se que X (int) esteja armazenado no topo da pilha antes
     # da chamada a essa funcao
 
-    popl    %ecx        # salva end de ret em ecx
+    subl    $4, %esp    # move stack para nao fazer o pop do end. de retorno
     popl    %ebx        # ebx contem o numero X de quartos
-    pushl   %ecx        # adiciona end de ret na pilha novamente
 
     movl    totalRegistros, %ecx
     movl    cabecaLista, %edx
@@ -577,10 +576,19 @@ buscarRegistroMaiorQueBuscado:
     movl    557(%edx), %eax
     movl    %eax, %edx
 
-    loop _loopBuscarRegistroMaiorQueBuscado
+    loop    _loopBuscarRegistroMaiorQueBuscado
+
+    cmpl    $0, %ecx
+    je      _chegouFimDaListaSemEncontrarMaior
 
     _fimBuscarRegistroMaiorQueBuscado:
     ret
+
+    _chegouFimDaListaSemEncontrarMaior:
+    # usa totalRegistros para imprimir ate o ultimo elemento
+    movl    totalRegistros, %ecx 
+    movl    %ecx, posRegistroMaiorQueBuscado
+    jmp     _fimBuscarRegistroMaiorQueBuscado
 
 _obterRelatorioGeral:
     movl    totalRegistros, %eax

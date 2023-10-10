@@ -1,6 +1,6 @@
 .section .data
     abertura:	.asciz	"\n====================================================\nControle de cadastro de imoveis para locacao\n====================================================\n"
-	menuOp:		.asciz	"\nMenu de Opcoes\n<1> Inserir imovel\n<2> Remover imovel\n<3> Consultar imovel\n<4> Relatorio geral\n<5> Recuperar registro\n<6> Salvar registros\n<7> Finalizar\nDigite opcao => "
+	menuOp:		.asciz	"\nMenu de Opcoes\n<1> Inserir imovel\n<2> Remover imovel\n<3> Consultar imoveis\n<4> Relatorio geral\n<5> Recuperar registro\n<6> Salvar registros\n<7> Finalizar\nDigite opcao => "
 	opcao:		.int	0
 
 	pedeNomeProp:	.asciz	"\nQual o nome do proprietario? (255 chars) => "

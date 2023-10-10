@@ -243,7 +243,6 @@ _inserirImovel:
 
     _contInserirImovel:
     # Atualiza arquivo dos registros
-    # call    atualizarArquivoRegistro
 
     jmp     _mostraMenu
 
@@ -568,8 +567,6 @@ buscarRegistroMaiorQueBuscado:
     movl    $-1, %edi    # posicao do registro buscado
     movl    $0, posRegistroMaiorQueBuscado
 
-    # movl    %edx, endRegistroBuscado
-
     _loopBuscarRegistroMaiorQueBuscado:
     inc     %edi                # incrementa posicao do registro buscado
     movl    %edi, posRegistroMaiorQueBuscado
@@ -577,9 +574,7 @@ buscarRegistroMaiorQueBuscado:
     cmpl    %ebx, %eax          
     jg     _fimBuscarRegistroMaiorQueBuscado  # eax > ebx
 
-    # movl    %edx, endRegistroAnteriorAoBuscado
     movl    557(%edx), %eax
-    # movl    %eax, endRegistroBuscado
     movl    %eax, %edx
 
     loop _loopBuscarRegistroMaiorQueBuscado

@@ -523,8 +523,9 @@ buscarRegistro:
     # Espera-se que X (int) esteja armazenado no topo da pilha antes
     # da chamada a essa funcao
 
-    subl    $4, %esp    # move stack para nao fazer o pop do end. de retorno
+    addl    $4, %esp    # move stack para nao fazer o pop do end. de retorno
     popl    %ebx        # ebx contem o numero X de quartos
+    subl    $8, %esp
 
     movl    totalRegistros, %ecx
     movl    cabecaLista, %edx
@@ -614,6 +615,7 @@ imprimirRegistros:
     popl    %ebp        # ebp contem a pos. do primeiro registro
     popl    %edi        # edi contem o numero de registros
     popl    %esi        # esi contem o end do primeiro registro
+    subl    $16, %esp
     
     _loopImprimirRegistros:
     # Posicao do registro

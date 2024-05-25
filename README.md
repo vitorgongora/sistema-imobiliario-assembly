@@ -62,5 +62,10 @@
 * _recuperarImovel
   * Exibe ao usuário o imóvel da posição X da lista.
 
+# Instruções para compilação em sistema GNU/LINUX
+`as -32 sistema-imobiliaria.s -o sistema-imobiliaria.o`
+
+`ld -m elf_i386 sistema-imobiliaria.o -l c -dynamic-linker /lib/ld-linux.so.2 -o sistema-imobiliaria`
+
 # References
 Blum, R. (2005). Professional Assembly Language. Germany: Wiley.

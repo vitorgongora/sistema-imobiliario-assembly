@@ -1,32 +1,32 @@
 .section .data
     abertura:	.asciz	"\n====================================================\nControle de cadastro de imoveis para locacao\n====================================================\n"
-	menuOp:		.asciz	"\nMenu de Opcoes\n<1> Inserir imovel\n<2> Remover imovel\n<3> Consultar imoveis\n<4> Relatorio geral\n<5> Recuperar registro\n<6> Salvar registros\n<7> Finalizar\nDigite opcao => "
-	opcao:		.int	0
-
-	pedeNomeProp:	.asciz	"\nQual o nome do proprietario? (255 chars) => "
-	pedeCelProp:	.asciz	"\nQual o celular do proprietario? (16 chars) => "
-    pedeTipoImov:	.asciz	"\nQual o tipo do imovel (casa/apartamento)? => "
-    pedeEndImov:	.asciz	"\nQual o endereco do imovel? (255 chars) => "
-    pedeNumQuartosImov:	.asciz	"\nQual o numero de quartos do imovel? (insira apenas o numero) => "
+    menuOp:		.asciz	"\nMenu de Opcoes\n<1> Inserir imovel\n<2> Remover imovel\n<3> Consultar imoveis\n<4> Relatorio geral\n<5> Recuperar registro\n<6> Salvar registros\n<7> Finalizar\nDigite opcao => "
+    opcao:		.int	0
+    
+    pedeNomeProp:	        .asciz	"\nQual o nome do proprietario? (255 chars) => "
+    pedeCelProp:	        .asciz	"\nQual o celular do proprietario? (16 chars) => "
+    pedeTipoImov:	        .asciz	"\nQual o tipo do imovel (casa/apartamento)? => "
+    pedeEndImov:	        .asciz	"\nQual o endereco do imovel? (255 chars) => "
+    pedeNumQuartosImov:	        .asciz	"\nQual o numero de quartos do imovel? (insira apenas o numero) => "
     pedeExisteGaragemImov:	.asciz	"\nO imovel possui garagem (S/N)? => "
-    pedeMetragemImov:	.asciz	"\nQual a metragem do imovel? (insira apenas o numero) => "
+    pedeMetragemImov:	        .asciz	"\nQual a metragem do imovel? (insira apenas o numero) => "
     pedeValorAluguelImov:	.asciz	"\nQual o valor do aluguel do imovel (R$)? (insira apenas o numero) => "
 
-    mostraPosRegistro: .asciz "\nPos. do registro = %d"
-    mostraNomeProp:	.asciz	"\nNome do proprietario = %s"
-    mostraCelProp:	.asciz	"\nCelular do proprietario = %s"
-    mostraTipoImov:	.asciz	"\nTipo do imovel = %s"
-    mostraEndImov:	.asciz	"\nEndereco do imovel = %s"
+    mostraPosRegistro:          .asciz "\nPos. do registro = %d"
+    mostraNomeProp:	        .asciz	"\nNome do proprietario = %s"
+    mostraCelProp:	        .asciz	"\nCelular do proprietario = %s"
+    mostraTipoImov:	        .asciz	"\nTipo do imovel = %s"
+    mostraEndImov:	        .asciz	"\nEndereco do imovel = %s"
     mostraNumQuartosImov:	.asciz	"\nNumero de quartos do imovel = %d"
     mostraExisteGaragemImov:	.asciz	"\nExiste garagem no imovel = %.1s"
-    mostraMetragemImov:	.asciz	"\nMetragem do imovel = %d"
+    mostraMetragemImov:	        .asciz	"\nMetragem do imovel = %d"
     mostraValorAluguelImov:	.asciz	"\nValor do aluguel do imovel (R$) = %d\n"
 
     tipoNum:            .asciz 	" %d"
-	tipoChar:	        .asciz	" %c"
-	tipoStr:	        .asciz	"%s"
+    tipoChar:	        .asciz	" %c"
+    tipoStr:	        .asciz	"%s"
     tipoStrComEspaco:   .asciz " %[^\n]"
-	newLine: 	.asciz 	"\n"
+    newLine: 	        .asciz 	"\n"
 
     pedeNumDeQuartosFiltro: .asciz "\nPor qual quantia de quartos deseja filtrar? => "
     numQuartosFiltro: .int 0
@@ -82,54 +82,54 @@ _start:
 
 _mostraMenu:
     pushl	$abertura
-	call	printf
-	addl	$4, %esp
+    call	printf
+    addl	$4, %esp
 
-	call	menuOpcoes
+    call	menuOpcoes
 
-	cmpl	$7, opcao
-	je	    _fim
+    cmpl	$7, opcao
+    je	    _fim
 
-	call	trataOpcoes
+    call	trataOpcoes
 	
-	jmp	    _mostraMenu
+    jmp	    _mostraMenu
 
 _fim:
-	pushl   $0
-	call    exit
+    pushl   $0
+    call    exit
 
 menuOpcoes:
-	pushl	$menuOp
-	call	printf
+    pushl	$menuOp
+    call	printf
 
-	pushl	$opcao
-	pushl	$tipoNum
-	call	scanf
+    pushl	$opcao
+    pushl	$tipoNum
+    call	scanf
 
-	addl	$12, %esp
+    addl	$12, %esp
 
-	RET
+    ret
 
 trataOpcoes:
-	cmpl	$1, opcao
-	je	    _inserirImovel
+    cmpl	$1, opcao
+    je	    _inserirImovel
 
-	cmpl	$2, opcao
-	je	    _removerImovel
+    cmpl	$2, opcao
+    je	    _removerImovel
 	
-	cmpl	$3, opcao
-	je	    _consultarImovel
+    cmpl	$3, opcao
+    je	    _consultarImovel
 
-	cmpl	$4, opcao
-	je		_obterRelatorioGeral
+    cmpl	$4, opcao
+    je		_obterRelatorioGeral
 
     cmpl	$5, opcao
-	je		_recuperarImovel
+    je		_recuperarImovel
 
     cmpl	$6, opcao
-	je		atualizarArquivoRegistro
+    je		atualizarArquivoRegistro
 
-	ret
+    ret
    
 carregarArquivoRegistro:
     movl    $5, %eax
@@ -144,10 +144,10 @@ carregarArquivoRegistro:
     _loopCarregarArquivoRegistro:
     # Aloca memoria
     pushl	tamanhoTotalRegistroBytes
-	call	malloc
+    call	malloc
     movl    %eax, endNovoRegistro
     movl    endNovoRegistro, %esi
-	addl	$4,	%esp
+    addl	$4,	%esp
 
     movl    $3, %eax
     movl    filehandle, %ebx
@@ -300,90 +300,90 @@ inserirRegistroEmListaLimpa:
 lerEntradaImovelUsuario:
     # Armazena os dados informados pelo usuario
     
-	pushl	tamanhoTotalRegistroBytes
-	call	malloc
+    pushl	tamanhoTotalRegistroBytes
+    call	malloc
     movl    %eax, endNovoRegistro
     movl    endNovoRegistro, %esi
-	addl	$4,	%esp
+    addl	$4,	%esp
 
     # Nome prop
     pushl	$pedeNomeProp
-	call	printf
+    call	printf
 
-	pushl	%esi
-	pushl	$tipoStrComEspaco
-	call	scanf
-	addl	$12, %esp
+    pushl	%esi
+    pushl	$tipoStrComEspaco
+    call	scanf
+    addl	$12, %esp
     addl    $256, %esi      # move para o prox. campo
 
     # Cel prop
     pushl	$pedeCelProp
-	call	printf
+    call	printf
 
-	pushl	%esi
-	pushl	$tipoStr
-	call	scanf
-	addl	$12, %esp
+    pushl	%esi
+    pushl	$tipoStr
+    call	scanf
+    addl	$12, %esp
     addl    $16, %esi      # move para o prox. campo
 
     # Tipo imov
     pushl	$pedeTipoImov
-	call	printf
+    call	printf
 
-	pushl	%esi
-	pushl	$tipoStr
-	call	scanf
-	addl	$12, %esp
+    pushl	%esi
+    pushl	$tipoStr
+    call	scanf
+    addl	$12, %esp
     addl    $16, %esi      # move para o prox. campo
 
     # Endereco imov
     pushl	$pedeEndImov
-	call	printf
+    call	printf
 
-	pushl	%esi
-	pushl	$tipoStrComEspaco
-	call	scanf
-	addl	$12, %esp
+    pushl	%esi
+    pushl	$tipoStrComEspaco
+    call	scanf
+    addl	$12, %esp
     addl    $256, %esi      # move para o prox. campo
 
     # Numero quartos imov
     pushl	$pedeNumQuartosImov
-	call	printf
+    call	printf
 
-	pushl	%esi
-	pushl	$tipoNum
-	call	scanf
-	addl	$12, %esp
+    pushl	%esi
+    pushl	$tipoNum
+    call	scanf
+    addl	$12, %esp
     addl    $4, %esi      # move para o prox. campo
 
     # Existe garagem imov
     pushl	$pedeExisteGaragemImov
-	call	printf
+    call	printf
 
-	pushl	%esi
-	pushl	$tipoStr
-	call	scanf
-	addl	$12, %esp
+    pushl	%esi
+    pushl	$tipoStr
+    call	scanf
+    addl	$12, %esp
     addl    $1, %esi      # move para o prox. campo
 
     # Metragem imov
     pushl	$pedeMetragemImov
-	call	printf
+    call	printf
 
-	pushl	%esi
-	pushl	$tipoNum
-	call	scanf
-	addl	$12, %esp
+    pushl	%esi
+    pushl	$tipoNum
+    call	scanf
+    addl	$12, %esp
     addl    $4, %esi      # move para o prox. campo
 
     # Valor aluguel imov
     pushl	$pedeValorAluguelImov
-	call	printf
+    call	printf
 
-	pushl	%esi
-	pushl	$tipoNum
-	call	scanf
-	addl	$12, %esp
+    pushl	%esi
+    pushl	$tipoNum
+    call	scanf
+    addl	$12, %esp
     addl    $4, %esi      # move para o prox. campo
 
     # Ponteiro proximo reg
@@ -398,11 +398,11 @@ _removerImovel:
     je      _nenhumRegistroEncontrado
 
     pushl	$pedePosRemover
-	call	printf
+    call	printf
 
     pushl	$posRegRemover
-	pushl	$tipoNum
-	call	scanf
+    pushl	$tipoNum
+    call	scanf
     addl	$12, %esp
 
     movl    posRegRemover, %ecx
@@ -448,17 +448,17 @@ _removerImovel:
     movl    %eax, totalRegistros
 
     pushl	endRegistroRemovido
-	call 	free
+    call 	free
 
     pushl	$mostraSucessoOp
-	call	printf
+    call	printf
     addl	$8, %esp
 
     jmp     _mostraMenu
 
     _posicaoInvalida:
     pushl	$mostraPosInvalida
-	call	printf
+    call	printf
 
     jmp     _mostraMenu
 
@@ -468,11 +468,11 @@ _consultarImovel:
     je      _nenhumRegistroEncontrado
 
     pushl	$pedeNumDeQuartosFiltro
-	call	printf
+    call	printf
 
-	pushl	$numQuartosFiltro    # contem o num de quartos
-	pushl	$tipoNum
-	call	scanf
+    pushl	$numQuartosFiltro    # contem o num de quartos
+    pushl	$tipoNum
+    call	scanf
     addl	$12, %esp
 
     pushl   numQuartosFiltro   # passa num quartos como param
@@ -621,8 +621,8 @@ imprimirRegistros:
     # Posicao do registro
     pushl   %ebp
     pushl   $mostraPosRegistro
-	call	printf
-    addl 	$8, %esp
+    call    printf
+    addl    $8, %esp
     inc     %ebp    # incrementa a posicao do registro para o prox.
 
     # Nome prop
@@ -635,15 +635,15 @@ imprimirRegistros:
     # Cel prop
     pushl   %esi
     pushl   $mostraCelProp
-	call	printf
+    call	printf
     addl 	$8, %esp
     addl    $16, %esi
 
     # Tipo imov
     pushl   %esi
     pushl   $mostraTipoImov
-	call	printf
-    addl 	$8, %esp
+    call    printf
+    addl    $8, %esp
     addl    $16, %esi
 
     # Endereco imov
@@ -657,31 +657,31 @@ imprimirRegistros:
     movl    (%esi), %ebx
     pushl   %ebx
     pushl   $mostraNumQuartosImov
-	call	printf
-    addl 	$8, %esp
+    call    printf
+    addl    $8, %esp
     addl    $4, %esi
 
     # Existe garagem imov
     pushl   %esi
     pushl   $mostraExisteGaragemImov
-	call	printf
-    addl 	$8, %esp
+    call    printf
+    addl    $8, %esp
     addl    $1, %esi
 
     # Metragem imov
     movl    (%esi), %ebx
     pushl   %ebx
     pushl   $mostraMetragemImov
-	call	printf
-    addl 	$8, %esp
+    call    printf
+    addl    $8, %esp
     addl    $4, %esi
 
     # Valor alugel imov
     movl    (%esi), %ebx
     pushl   %ebx
     pushl   $mostraValorAluguelImov
-	call	printf
-    addl 	$8, %esp
+    call    printf
+    addl    $8, %esp
     addl    $4, %esi
 
     # Move para o proximo registro
@@ -700,13 +700,13 @@ _recuperarImovel:
     cmpl    $0, %ebx
     je      _nenhumRegistroEncontrado
 
-    pushl	$pedePosRecuperar
-	call	printf
+    pushl   $pedePosRecuperar
+    call    printf
 
-    pushl	$posRegRecuperar
-	pushl	$tipoNum
-	call	scanf
-    addl	$12, %esp
+    pushl    $posRegRecuperar
+    pushl    $tipoNum
+    call     scanf
+    addl     $12, %esp
 
     movl    posRegRecuperar, %ecx
     movl    cabecaLista, %eax
